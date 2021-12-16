@@ -341,7 +341,11 @@ public final class ParseELF {
                                 jumps_branches.getOrDefault(
                                         sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
                                 switch (temp16.getCommand()) {
-                                    case "c.addi4spn" -> "c.addi4spn " +
+                                    case "c.addi4spn" -> (temp16.from4to2 == 0 &&
+                                            temp16.c_12_5_value() == 0) ?
+                                                            "illegal_command"
+                                                            :
+                                                            "c.addi4spn " +
                                                             getRVCRegister(temp16.from4to2) +
                                                             ", sp, " +
                                                             temp16.c_12_5_value();
