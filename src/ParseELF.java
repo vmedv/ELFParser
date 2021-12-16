@@ -24,7 +24,6 @@ public final class ParseELF {
         parse_shstrtab();
         strtab = parse_strtab();
         parse_symtab();
-//        findNotMarked();
         parse_text();
         write_symtab();
     }
@@ -177,13 +176,18 @@ public final class ParseELF {
             Command16bit temp16;
             if (temp instanceof Command32bit) {
                 temp32 = (Command32bit) temp;
-                write.writeBytes(temp32.load_store ?
+                write.writeBytes(temp32.load_store ? // two branches for load/store commands and for not load/store
                         String.format(
-                                (jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, "").equals("") ?
-                                        "%08x %10s  %s %s, %s(%s)\n" :
+                                (jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, "")
+                                        .equals("")
+                                        ? // each branch has two format options (if string has ":" and not
+                                        "%08x %10s  %s %s, %s(%s)\n"
+                                        :
                                         "%08x %10s: %s %s, %s(%s)\n"),
                                 sections.get(parsedSections.get(".text")).sh_addr.value + pc,
-                                jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
+                                jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
                                 temp32.getCommand(),
                                 switch (temp32.getCommand()) {
                                     case
@@ -200,9 +204,13 @@ public final class ParseELF {
                                     default -> "";
                                 },
                                 getRegister(temp32.from19to15)
-                        ) :
+                        )
+                        :
                         String.format(
-                                (jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, "").equals("") ?
+                                (jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, "")
+                                        .equals("")
+                                        ?
                                         (temp32.type == Command32bit.Optype.E ||
                                                 temp32.getCommand().equals("jal") ||
                                                 temp32.getCommand().equals("lui") ||
@@ -213,8 +221,10 @@ public final class ParseELF {
                                                 temp32.getCommand().equals("lui") ||
                                                 temp32.getCommand().equals("auipc") ? "%08x %10s: %s %s, %s %s\n" :
                                                 "%08x %10s: %s %s, %s, %s\n")),
+                                                // different format for commands with different amount of args
                                 sections.get(parsedSections.get(".text")).sh_addr.value + pc,
-                                jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
+                                jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
                                 temp32.getCommand(),
                                 switch (temp32.getCommand()) {
                                     case
@@ -248,7 +258,8 @@ public final class ParseELF {
                                             "mulh", "mulhsu", "mulhu",
                                             "div", "divu", "rem",
                                             "remu"  -> getRegister(temp32.from19to15);
-                                    case "jal" -> temp32.buildJTypeImm() + sections.get(parsedSections.get(".text")).sh_addr.value + pc;
+                                    case "jal" -> temp32.buildJTypeImm() +
+                                            sections.get(parsedSections.get(".text")).sh_addr.value + pc;
                                     case
                                             "beq", "bne", "blt",
                                             "bge", "bltu","bgeu" -> getRegister(temp32.from24to20);
@@ -270,8 +281,7 @@ public final class ParseELF {
                                     case
                                             "beq", "bne", "blt",
                                             "bge", "bltu","bgeu" -> temp32.buildBTypeImm() +
-                                            sections.get(parsedSections.get(".text")).sh_addr.value +
-                                            pc;
+                                            sections.get(parsedSections.get(".text")).sh_addr.value + pc;
                                     default -> "";
                                 }
                         ));
@@ -280,16 +290,22 @@ public final class ParseELF {
                 temp16 = (Command16bit) temp;
                 write.writeBytes(temp16.load_store ?
                         String.format(
-                                (jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, "").equals("") ?
-                                        "%08x %10s  %s %s, %s(%s)\n" :
+                                (jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, "")
+                                        .equals("")
+                                        ?
+                                        "%08x %10s  %s %s, %s(%s)\n"
+                                        :
                                         "%08x %10s: %s %s, %s(%s)\n"),
                                 sections.get(parsedSections.get(".text")).sh_addr.value + pc,
-                                jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
+                                jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
                                 temp16.getCommand(),
                                 switch (temp16.getCommand()) {
                                     case "c.lw", "c.sw" -> getRVCRegister(temp16.from4to2);
                                     case "c.swsp" -> getRegister((temp16.from6to5 << 3) + temp16.from4to2);
-                                    case "c.lwsp" -> getRegister(((temp16.from12to10 & 0b011) << 3) + temp16.from9to7);
+                                    case "c.lwsp" -> getRegister(((temp16.from12to10 & 0b011) << 3) +
+                                                                        temp16.from9to7);
                                     default -> "";
                                 },
                                 switch (temp16.getCommand()) {
@@ -301,7 +317,9 @@ public final class ParseELF {
                                             ((temp16.from12to10 & 0b100) << 3) +
                                             (temp16.from6to5 << 3) +
                                             (temp16.from4to2 & 0b100);
-                                    case "c.swsp" -> ((temp16.from9to7 & 0b011) << 6) + (temp16.from12to10 << 3) + (temp16.from9to7 & 0b001 << 2);
+                                    case "c.swsp" -> ((temp16.from9to7 & 0b011) << 6) +
+                                                      (temp16.from12to10 << 3) +
+                                                      (temp16.from9to7 & 0b001 << 2);
                                     default -> "";
                                 },
                                 switch (temp16.getCommand()) {
@@ -312,31 +330,54 @@ public final class ParseELF {
 
                         ) :
                         String.format(
-                                (jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, "").equals("") ?
+                                (jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, "")
+                                        .equals("")
+                                        ?
                                         "%08x %10s  %s\n" : "%08x %10s: %s \n"),
                                 sections.get(parsedSections.get(".text")).sh_addr.value + pc,
-                                jumps_branches.getOrDefault(sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
+                                jumps_branches.getOrDefault(
+                                        sections.get(parsedSections.get(".text")).sh_addr.value + pc, ""),
                                 switch (temp16.getCommand()) {
-                                    case "c.addi4spn" -> "c.addi4spn " + getRVCRegister(temp16.from4to2) + ", sp, " + temp16.c_12_5_value();
-                                    case "c.addi" -> "c.addi " + getRegister(((temp16.from12to10 & 0b011) << 3) +
-                                            temp16.from9to7) + ", " +
-                                            temp16.c_addi_value();
-                                    case "c.jal", "c.j" -> temp16.getCommand() + " " + (temp16.c_jal_value() + sections.get(parsedSections.get(".text")).sh_addr.value + pc);
+                                    case "c.addi4spn" -> "c.addi4spn " +
+                                                            getRVCRegister(temp16.from4to2) +
+                                                            ", sp, " +
+                                                            temp16.c_12_5_value();
+                                    case "c.addi" -> "c.addi " +
+                                                            getRegister(((temp16.from12to10 & 0b011) << 3) +
+                                                            temp16.from9to7) + ", " +
+                                                            temp16.c_addi_value();
+                                    case "c.jal", "c.j" -> temp16.getCommand() + " " +
+                                                            (temp16.c_jal_value() +
+                                                                    sections.get(parsedSections.get(".text"))
+                                                                            .sh_addr.value +
+                                                                    pc);
                                     case "c.li" -> "c.li " + getRegister(((temp16.from12to10 & 0b011) << 3) +
                                             temp16.from9to7) + ", " + temp16.c_addi_value();
                                     case "c.addi16sp" -> "c.addi16sp sp, " + temp16.c_addi16sp_value();
                                     case "c.lui" -> "c.lui " + getRegister(((temp16.from12to10 & 0b011) << 3) +
                                             temp16.from9to7) + ", " + temp16.c_lui_value();
-                                    case "c.srli", "c.srai", "c.andi" -> temp16.getCommand() + " " + getRVCRegister(temp16.from9to7) + ", " + temp16.c_shift_value();
-                                    case "c.sub", "c.xor", "c.or", "c.and" -> temp16.getCommand() + " " + getRVCRegister(temp16.from9to7) + ", " + getRVCRegister(temp16.from4to2);
+                                    case "c.srli", "c.srai", "c.andi" -> temp16.getCommand() + " " +
+                                                            getRVCRegister(temp16.from9to7) + ", " +
+                                                            temp16.c_shift_value();
+                                    case "c.sub", "c.xor", "c.or", "c.and" -> temp16.getCommand() + " " +
+                                                            getRVCRegister(temp16.from9to7) + ", " +
+                                                            getRVCRegister(temp16.from4to2);
                                     case "c.slli" -> "c.slli " + getRegister(((temp16.from12to10 & 0b011) << 3) +
-                                            temp16.from9to7) + ", " + temp16.c_shift_value();
-                                    case "c.beqz", "c.bnez" -> temp16.getCommand() + " " + getRVCRegister(temp16.from9to7) +
-                                            ", " + (temp16.c_branch_value() + sections.get(parsedSections.get(".text")).sh_addr.value + pc);
+                                                                temp16.from9to7) + ", " +
+                                                            temp16.c_shift_value();
+                                    case "c.beqz", "c.bnez" -> temp16.getCommand() + " " +
+                                                            getRVCRegister(temp16.from9to7) + ", " +
+                                                            (temp16.c_branch_value() +
+                                                                    sections.get(parsedSections.get(".text"))
+                                                                            .sh_addr.value +
+                                                                    pc);
                                     case "c.jr" -> "c.jr " + getRegister(((temp16.from12to10 & 0b011) << 3) +
                                             temp16.from9to7);
-                                    case "c.mv", "c.add" -> temp16.getCommand() + " " + getRegister(((temp16.from12to10 & 0b011) << 3) +
-                                            temp16.from9to7) + ", " + getRegister((temp16.from6to5 << 3) + temp16.from4to2);
+                                    case "c.mv", "c.add" -> temp16.getCommand() + " " +
+                                                            getRegister(((temp16.from12to10 & 0b011) << 3) +
+                                                                temp16.from9to7) + ", " +
+                                                            getRegister((temp16.from6to5 << 3) + temp16.from4to2);
                                     case "c.ebreak" -> "c.ebreak";
                                     case "c.jalr" -> "c.jalr " + getRegister(((temp16.from12to10 & 0b011) << 3) +
                                             temp16.from9to7);
