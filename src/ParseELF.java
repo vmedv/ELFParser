@@ -211,12 +211,14 @@ public final class ParseELF {
                                         sections.get(parsedSections.get(".text")).sh_addr.value + pc, "")
                                         .equals("")
                                         ?
-                                        (temp32.type == Command32bit.Optype.E ? "%08x %10s  %s %s %s %s\n" :
+                                        (temp32.type == Command32bit.Optype.E ||
+                                                temp32.getCommand().equals("unknown_command") ? "%08x %10s  %s %s %s %s\n" :
                                                 temp32.getCommand().equals("jal") ||
                                                 temp32.getCommand().equals("lui") ||
                                                 temp32.getCommand().equals("auipc") ? "%08x %10s  %s %s, %s %s\n" :
                                                 "%08x %10s  %s %s, %s, %s\n") :
-                                        (temp32.type == Command32bit.Optype.E ? "%08x %10s: %s %s %s %s\n" :
+                                        (temp32.type == Command32bit.Optype.E ||
+                                                temp32.getCommand().equals("unknown_command") ? "%08x %10s: %s %s %s %s\n" :
                                                 temp32.getCommand().equals("jal") ||
                                                 temp32.getCommand().equals("lui") ||
                                                 temp32.getCommand().equals("auipc") ? "%08x %10s: %s %s, %s %s\n" :
