@@ -1,6 +1,6 @@
 # ELFParser
 
-disassembler of ELF-files of RISK-V ISA
+ELF Disassembler of RISK-V ISA. Only R32I, R32M, RVC instructions set supported/
 
 ---
 **Usage:**
